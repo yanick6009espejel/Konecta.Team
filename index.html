@@ -5,70 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Konecta · Tu Alma</title>
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<!-- Firebase CDN Compat (funciona en WebView sin npm ni módulos) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  // ──────────────────────────────────────────────────────────────
-  // CONFIGURA TU PROYECTO FIREBASE AQUÍ
-  // 1. Ve a https://console.firebase.google.com
-  // 2. Crea proyecto → Realtime Database → Reglas: read/write = true
-  // 3. Copia tu firebaseConfig y pégalo aquí
-  // ──────────────────────────────────────────────────────────────
+<script>
   const firebaseConfig = {
-    apiKey:            "TU_API_KEY",
-    authDomain:        "TU_PROYECTO.firebaseapp.com",
-    databaseURL:       "https://TU_PROYECTO-default-rtdb.firebaseio.com",
-    projectId:         "TU_PROYECTO",
-    storageBucket:     "TU_PROYECTO.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
-    appId:             "TU_APP_ID"
+    apiKey:            "AIzaSyAayRb0M_KZPtGNdIhOeg06mbvvQ15-H5o",
+    authDomain:        "konecta-chat.firebaseapp.com",
+    databaseURL:       "https://konecta-chat-default-rtdb.firebaseio.com",
+    projectId:         "konecta-chat",
+    storageBucket:     "konecta-chat.firebasestorage.app",
+    messagingSenderId: "1035970465172",
+    appId:             "1:1035970465172:web:7b1716a04c50fbae069381"
   };
-
-  let dbRef = null;
-  let currentUser = "Especialista";
-
-  window._firebaseReady = false;
-
-  try {
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
-    dbRef = ref(db, "konecta_chat");
-    window._firebaseReady = true;
-
-    // Escuchar mensajes en tiempo real
-    onChildAdded(dbRef, (snap) => {
-      const d = snap.val();
-      if (d) renderMensaje(d.autor, d.texto, d.uid === window._uid);
-    });
-
-  } catch(e) {
-    console.warn("Firebase no configurado — modo local activo.", e.message);
-  }
-
-  window._sendMsg = async (texto) => {
-    if (!dbRef) {
-      // Modo local (sin Firebase)
-      renderMensaje(currentUser, texto, true);
-      return;
-    }
-    await push(dbRef, {
-      autor: currentUser,
-      texto,
-      uid: window._uid,
-      ts: serverTimestamp()
-    });
-  };
-
-  window._setUser = (u) => { currentUser = u; };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
 </script>
 
 <style>
-/* ═══════════════════════════════════════
-   TOKENS DE DISEÑO
-═══════════════════════════════════════ */
 :root {
   --arena:       #FDFBF7;
   --arena-2:     #F4F0EA;
@@ -76,676 +31,149 @@
   --texto-2:     #5A5550;
   --oro:         #C59D83;
   --oro-2:       #A67C6D;
-  --oro-3:       #8A5E52;
   --verde:       #063D3B;
   --verde-2:     #042928;
-  --verde-light: #0A5250;
+  --verde-l:     #0A5250;
   --blanco:      #FFFFFF;
   --sombra:      rgba(6,61,59,0.08);
-  --borde:       rgba(197,157,131,0.2);
+  --borde:       rgba(197,157,131,0.22);
   --r:           10px;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-html, body {
-  height: 100%;
-  background: var(--arena);
-  color: var(--texto);
-  font-family: 'Georgia', 'Times New Roman', serif;
-  overflow: hidden;
-}
-
-/* ═══════════════════════════════════════
-   PANTALLAS
-═══════════════════════════════════════ */
-.pantalla { display: none; flex-direction: column; height: 100vh; }
-.pantalla.activa { display: flex; }
-
-/* ═══════════════════════════════════════
-   LOGIN
-═══════════════════════════════════════ */
-#login {
-  justify-content: center;
-  align-items: center;
-  background: var(--arena);
-  padding: 32px 28px;
-  position: relative;
-  overflow: hidden;
-}
-
-#login::before {
-  content: '';
-  position: absolute;
-  top: -80px; right: -80px;
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(197,157,131,0.12) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-#login::after {
-  content: '';
-  position: absolute;
-  bottom: -60px; left: -60px;
-  width: 220px; height: 220px;
-  background: radial-gradient(circle, rgba(6,61,59,0.06) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.logo-wrap {
-  text-align: center;
-  margin-bottom: 44px;
-  position: relative;
-  z-index: 1;
-}
-
-.logo-anillo {
-  width: 72px; height: 72px;
-  border: 1.5px solid var(--oro);
-  border-radius: 50%;
-  margin: 0 auto 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; color: var(--oro);
-  position: relative;
-}
-
-.logo-anillo::after {
-  content: '';
-  position: absolute;
-  inset: -5px;
-  border: 1px solid rgba(197,157,131,0.25);
-  border-radius: 50%;
-}
-
-.logo-nombre {
-  font-size: 34px;
-  color: var(--oro);
-  letter-spacing: 3px;
-  font-style: italic;
-  line-height: 1;
-}
-
-.logo-sub {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 5px;
-  color: var(--texto-2);
-  margin-top: 6px;
-}
-
-.tag-clinica {
-  display: inline-block;
-  font-size: 8px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--blanco);
-  background: var(--verde);
-  padding: 3px 10px;
-  border-radius: 20px;
-  margin-top: 10px;
-}
-
-.form-login {
-  width: 100%;
-  max-width: 300px;
-  position: relative;
-  z-index: 1;
-}
-
-.campo {
-  position: relative;
-  margin-bottom: 14px;
-}
-
-.campo input {
-  width: 100%;
-  padding: 14px 16px;
-  background: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: var(--r);
-  color: var(--texto);
-  font-size: 14px;
-  font-family: inherit;
-  transition: border-color 0.25s, box-shadow 0.25s;
-  -webkit-appearance: none;
-}
-
-.campo input:focus {
-  outline: none;
-  border-color: var(--oro);
-  box-shadow: 0 0 0 3px rgba(197,157,131,0.12);
-}
-
-.campo input::placeholder { color: #B0A89E; font-size: 13px; }
-
-.btn-oro {
-  width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, var(--oro) 0%, var(--oro-2) 100%);
-  color: var(--blanco);
-  border: none;
-  border-radius: var(--r);
-  font-size: 12px;
-  font-family: inherit;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-bottom: 12px;
-  font-weight: bold;
-  transition: opacity 0.2s, transform 0.1s;
-  box-shadow: 0 4px 16px rgba(197,157,131,0.3);
-}
-
-.btn-oro:active { opacity: 0.85; transform: scale(0.98); }
-
-.btn-bio {
-  width: 100%;
-  padding: 13px;
-  background: transparent;
-  color: var(--verde);
-  border: 1px solid rgba(6,61,59,0.25);
-  border-radius: var(--r);
-  font-size: 12px;
-  font-family: inherit;
-  letter-spacing: 1px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: background 0.2s;
-}
-
-.btn-bio:active { background: rgba(6,61,59,0.06); }
-
-.error-msg {
-  color: #C0392B;
-  font-size: 11px;
-  text-align: center;
-  margin-top: 8px;
-  min-height: 16px;
-  letter-spacing: 0.5px;
-}
-
-/* ═══════════════════════════════════════
-   APP PRINCIPAL
-═══════════════════════════════════════ */
-#app {
-  background: var(--arena);
-}
-
-/* Header */
-.app-header {
-  background: var(--blanco);
-  border-bottom: 1px solid var(--borde);
-  padding: 14px 20px;
-  display: flex; justify-content: space-between; align-items: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px var(--sombra);
-}
-
-.header-brand {
-  display: flex; align-items: center; gap: 10px;
-}
-
-.header-anillo {
-  width: 34px; height: 34px;
-  border: 1px solid var(--oro);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: var(--oro);
-}
-
-.header-nombre { font-size: 18px; color: var(--oro); font-style: italic; letter-spacing: 1px; }
-.header-sub    { font-size: 9px; color: var(--texto-2); letter-spacing: 2px; text-transform: uppercase; }
-
-.header-user {
-  display: flex; align-items: center; gap: 8px;
-  cursor: pointer;
-}
-
-.avatar-circle {
-  width: 32px; height: 32px;
-  background: var(--verde);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--blanco); font-size: 13px; font-weight: bold;
-}
-
-/* Scroll principal */
-.scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 18px 16px 90px;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Tarjetas */
-.tarjeta {
-  background: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 12px var(--sombra);
-}
-
-.tarjeta-titulo {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  color: var(--verde);
-  margin-bottom: 14px;
-  display: flex; align-items: center; gap: 8px;
-}
-
-.tarjeta-titulo span { font-size: 15px; }
-
-/* ═══════════════════════════════════════
-   MÓDULO: PRÓXIMA REUNIÓN
-═══════════════════════════════════════ */
-.reunion-banner {
-  background: linear-gradient(135deg, var(--verde) 0%, var(--verde-light) 100%);
-  border-radius: 10px;
-  padding: 16px;
-  color: var(--blanco);
-  margin-bottom: 14px;
-  position: relative;
-  overflow: hidden;
-}
-
-.reunion-banner::after {
-  content: 'Ψ';
-  position: absolute;
-  right: 16px; top: 50%;
-  transform: translateY(-50%);
-  font-size: 44px;
-  color: rgba(255,255,255,0.06);
-  font-style: italic;
-}
-
-.reunion-etiqueta {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 3px;
-  color: rgba(255,255,255,0.6); margin-bottom: 4px;
-}
-
-.reunion-hora {
-  font-size: 28px; font-style: italic; letter-spacing: 1px;
-  line-height: 1;
-}
-
-.reunion-fecha {
-  font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px;
-}
-
-#contador-reunion {
-  font-size: 12px;
-  color: var(--oro);
-  margin-top: 8px;
-  letter-spacing: 1px;
-}
-
-.btn-verde {
-  width: 100%;
-  padding: 13px;
-  background: var(--verde);
-  color: var(--blanco);
-  border: none;
-  border-radius: 8px;
-  font-size: 11px;
-  font-family: inherit;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  font-weight: bold;
-  text-decoration: none;
-  display: block;
-  text-align: center;
-  transition: background 0.2s, transform 0.1s;
-  box-shadow: 0 3px 10px rgba(6,61,59,0.25);
-}
-
-.btn-verde:active { background: var(--verde-2); transform: scale(0.98); }
-
-.btn-verde-outline {
-  width: 100%;
-  padding: 12px;
-  background: transparent;
-  color: var(--verde);
-  border: 1px solid rgba(6,61,59,0.3);
-  border-radius: 8px;
-  font-size: 11px;
-  font-family: inherit;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 8px;
-  transition: background 0.2s;
-}
-
-.btn-verde-outline:active { background: rgba(6,61,59,0.05); }
-
-/* ═══════════════════════════════════════
-   MÓDULO: CHAT
-═══════════════════════════════════════ */
-.estado-firebase {
-  font-size: 10px;
-  letter-spacing: 1px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  margin-left: auto;
-}
-
-.firebase-on  { background: rgba(39,174,96,0.12); color: #1e8449; }
-.firebase-off { background: rgba(197,157,131,0.15); color: var(--oro-2); }
-
-.chat-caja {
-  height: 200px;
-  border: 1px solid #ECE9E6;
-  background: var(--arena);
-  border-radius: 8px;
-  padding: 10px;
-  overflow-y: auto;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.msg {
-  padding: 8px 12px;
-  border-radius: 10px;
-  max-width: 80%;
-  font-size: 13px;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.msg-sistema {
-  background: transparent;
-  color: var(--texto-2);
-  font-size: 10px;
-  text-align: center;
-  align-self: center;
-  letter-spacing: 1px;
-  padding: 2px 0;
-}
-
-.msg-recibido {
-  background: var(--blanco);
-  color: var(--texto);
-  align-self: flex-start;
-  border: 1px solid var(--borde);
-}
-
-.msg-enviado {
-  background: var(--verde);
-  color: var(--blanco);
-  align-self: flex-end;
-}
-
-.msg-autor {
-  font-size: 9px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-  opacity: 0.7;
-}
-
-.chat-input-fila {
-  display: flex; gap: 8px;
-}
-
-.chat-input-fila input {
-  flex: 1;
-  padding: 11px 14px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  background: var(--blanco);
-  color: var(--texto);
-  -webkit-appearance: none;
-}
-
-.chat-input-fila input:focus { outline: none; border-color: var(--oro); }
-
-.btn-enviar {
-  padding: 11px 16px;
-  background: var(--verde);
-  color: var(--blanco);
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-enviar:active { background: var(--verde-2); }
-
-/* Indicador de escritura */
-.typing-indicator {
-  display: none;
-  align-self: flex-start;
-  padding: 8px 12px;
-  background: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: 10px;
-}
-
-.typing-dot {
-  display: inline-block;
-  width: 6px; height: 6px;
-  background: var(--texto-2);
-  border-radius: 50%;
-  margin: 0 2px;
-  animation: blink 1.2s infinite;
-}
-
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes blink {
-  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-  40%           { opacity: 1;   transform: scale(1); }
-}
-
-/* ═══════════════════════════════════════
-   MÓDULO: AGENDA / MINUTA
-═══════════════════════════════════════ */
-.objetivos-lista {
-  margin: 0 0 14px 0;
-  padding: 0;
-  list-style: none;
-}
-
-.objetivo-item {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(197,157,131,0.1);
-  font-size: 13px;
-  color: var(--texto);
-  line-height: 1.4;
-}
-
-.objetivo-item:last-child { border-bottom: none; }
-
-.obj-num {
-  width: 20px; height: 20px;
-  background: var(--verde);
-  color: var(--blanco);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: bold;
-  flex-shrink: 0; margin-top: 1px;
-}
-
-.campo-minuta {
-  width: 100%;
-  min-height: 90px;
-  padding: 12px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-  background: var(--arena);
-  color: var(--texto);
-  margin-bottom: 10px;
-  -webkit-appearance: none;
-}
-
-.campo-minuta:focus { outline: none; border-color: var(--oro); }
-
-.guardado-badge {
-  display: none;
-  font-size: 10px;
-  color: #27ae60;
-  letter-spacing: 1px;
-  text-align: center;
-  margin-top: 6px;
-}
-
-/* ═══════════════════════════════════════
-   BARRA DE NAVEGACIÓN
-═══════════════════════════════════════ */
-.nav-bar {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--blanco);
-  border-top: 1px solid var(--borde);
-  display: flex;
-  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-  z-index: 100;
-  box-shadow: 0 -4px 16px var(--sombra);
-}
-
-.nav-item {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 6px 0;
-  cursor: pointer;
-  border: none; background: none;
-  color: var(--texto-2);
-  font-family: inherit;
-  transition: color 0.2s;
-}
-
-.nav-item.activo { color: var(--verde); }
-
-.nav-icono { font-size: 20px; }
-.nav-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; }
-
-.nav-badge {
-  position: absolute;
-  top: -2px; right: -2px;
-  width: 8px; height: 8px;
-  background: #E74C3C;
-  border-radius: 50%;
-  display: none;
-}
-
-.nav-icono-wrap { position: relative; display: inline-block; }
-
-/* ═══════════════════════════════════════
-   TOAST
-═══════════════════════════════════════ */
-#toast {
-  position: fixed;
-  bottom: 80px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--verde-2);
-  color: var(--blanco);
-  padding: 11px 22px;
-  border-radius: 30px;
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  z-index: 200;
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-#toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-/* ═══════════════════════════════════════
-   SECCIONES DE MÓDULOS (TABS)
-═══════════════════════════════════════ */
-.modulo { display: none; }
-.modulo.activo { display: block; }
-
-/* Accesos rápidos en home */
-.quick-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.quick-card {
-  background: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-  padding: 16px 14px;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  text-align: left;
-}
-
-.quick-card:active { transform: scale(0.97); box-shadow: 0 1px 6px var(--sombra); }
-
-.quick-icono { font-size: 22px; margin-bottom: 8px; }
-.quick-titulo { font-size: 12px; color: var(--texto); font-weight: bold; letter-spacing: 0.5px; }
-.quick-sub { font-size: 10px; color: var(--texto-2); margin-top: 2px; }
-
-/* ═══════════════════════════════════════
-   DIVISOR
-═══════════════════════════════════════ */
-.divisor {
-  height: 1px;
-  background: var(--borde);
-  margin: 14px 0;
-}
-
-/* Estilo de selección de especialista en login */
-.campo select {
-  width: 100%;
-  padding: 14px 16px;
-  background: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: var(--r);
-  color: var(--texto);
-  font-size: 14px;
-  font-family: inherit;
-  -webkit-appearance: none;
-  cursor: pointer;
-}
-
-.campo select:focus { outline: none; border-color: var(--oro); }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--arena);color:var(--texto);font-family:'Georgia','Times New Roman',serif;overflow:hidden;}
+
+/* ── PANTALLAS ── */
+.pantalla{display:none;flex-direction:column;height:100vh;}
+.pantalla.activa{display:flex;}
+
+/* ── LOGIN ── */
+#login{justify-content:center;align-items:center;background:var(--arena);padding:32px 28px;position:relative;overflow:hidden;}
+#login::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(197,157,131,.12) 0%,transparent 70%);border-radius:50%;pointer-events:none;}
+#login::after{content:'';position:absolute;bottom:-60px;left:-60px;width:220px;height:220px;background:radial-gradient(circle,rgba(6,61,59,.06) 0%,transparent 70%);border-radius:50%;pointer-events:none;}
+
+.logo-wrap{text-align:center;margin-bottom:44px;position:relative;z-index:1;}
+.logo-anillo{width:72px;height:72px;border:1.5px solid var(--oro);border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--oro);position:relative;}
+.logo-anillo::after{content:'';position:absolute;inset:-5px;border:1px solid rgba(197,157,131,.25);border-radius:50%;}
+.logo-nombre{font-size:34px;color:var(--oro);letter-spacing:3px;font-style:italic;line-height:1;}
+.logo-sub{font-size:10px;text-transform:uppercase;letter-spacing:5px;color:var(--texto-2);margin-top:6px;}
+.tag-clinica{display:inline-block;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--blanco);background:var(--verde);padding:3px 10px;border-radius:20px;margin-top:10px;}
+
+.form-login{width:100%;max-width:300px;position:relative;z-index:1;}
+.campo{position:relative;margin-bottom:14px;}
+.campo input,.campo select{width:100%;padding:14px 16px;background:var(--blanco);border:1px solid var(--borde);border-radius:var(--r);color:var(--texto);font-size:14px;font-family:inherit;transition:border-color .25s,box-shadow .25s;-webkit-appearance:none;}
+.campo input:focus,.campo select:focus{outline:none;border-color:var(--oro);box-shadow:0 0 0 3px rgba(197,157,131,.12);}
+.campo input::placeholder{color:#B0A89E;font-size:13px;}
+
+.btn-oro{width:100%;padding:15px;background:linear-gradient(135deg,var(--oro),var(--oro-2));color:var(--blanco);border:none;border-radius:var(--r);font-size:12px;font-family:inherit;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-bottom:12px;font-weight:bold;transition:opacity .2s,transform .1s;box-shadow:0 4px 16px rgba(197,157,131,.3);}
+.btn-oro:active{opacity:.85;transform:scale(.98);}
+.btn-bio{width:100%;padding:13px;background:transparent;color:var(--verde);border:1px solid rgba(6,61,59,.25);border-radius:var(--r);font-size:12px;font-family:inherit;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;}
+.btn-bio:active{background:rgba(6,61,59,.06);}
+.error-msg{color:#C0392B;font-size:11px;text-align:center;margin-top:8px;min-height:16px;letter-spacing:.5px;}
+
+/* ── APP ── */
+#app{background:var(--arena);}
+.app-header{background:var(--blanco);border-bottom:1px solid var(--borde);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;box-shadow:0 2px 8px var(--sombra);}
+.header-brand{display:flex;align-items:center;gap:10px;}
+.header-anillo{width:34px;height:34px;border:1px solid var(--oro);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--oro);}
+.header-nombre{font-size:18px;color:var(--oro);font-style:italic;letter-spacing:1px;}
+.header-sub{font-size:9px;color:var(--texto-2);letter-spacing:2px;text-transform:uppercase;}
+.header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.avatar-circle{width:32px;height:32px;background:var(--verde);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--blanco);font-size:13px;font-weight:bold;}
+
+.scroll-area{flex:1;overflow-y:auto;padding:18px 16px 90px;-webkit-overflow-scrolling:touch;}
+
+/* ── TARJETAS ── */
+.tarjeta{background:var(--blanco);border:1px solid var(--borde);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px var(--sombra);}
+.tarjeta-titulo{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:var(--verde);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.tarjeta-titulo span{font-size:15px;}
+
+/* ── REUNIÓN ── */
+.reunion-banner{background:linear-gradient(135deg,var(--verde),var(--verde-l));border-radius:10px;padding:16px;color:var(--blanco);margin-bottom:14px;position:relative;overflow:hidden;}
+.reunion-banner::after{content:'Ψ';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:44px;color:rgba(255,255,255,.06);font-style:italic;}
+.reunion-etiqueta{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.6);margin-bottom:4px;}
+.reunion-hora{font-size:28px;font-style:italic;letter-spacing:1px;line-height:1;}
+.reunion-fecha{font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;}
+#contador-reunion{font-size:12px;color:var(--oro);margin-top:8px;letter-spacing:1px;}
+
+.btn-verde{width:100%;padding:13px;background:var(--verde);color:var(--blanco);border:none;border-radius:8px;font-size:11px;font-family:inherit;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:bold;text-decoration:none;display:block;text-align:center;transition:background .2s,transform .1s;box-shadow:0 3px 10px rgba(6,61,59,.25);}
+.btn-verde:active{background:var(--verde-2);transform:scale(.98);}
+.btn-verde-outline{width:100%;padding:12px;background:transparent;color:var(--verde);border:1px solid rgba(6,61,59,.3);border-radius:8px;font-size:11px;font-family:inherit;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:bold;margin-top:8px;transition:background .2s;}
+.btn-verde-outline:active{background:rgba(6,61,59,.05);}
+
+/* ── ACCESOS RÁPIDOS ── */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.quick-card{background:var(--blanco);border:1px solid var(--borde);border-radius:12px;padding:16px 14px;cursor:pointer;transition:transform .15s,box-shadow .15s;text-align:left;}
+.quick-card:active{transform:scale(.97);}
+.quick-icono{font-size:22px;margin-bottom:8px;}
+.quick-titulo{font-size:12px;color:var(--texto);font-weight:bold;letter-spacing:.5px;}
+.quick-sub{font-size:10px;color:var(--texto-2);margin-top:2px;}
+
+/* ── CHAT ── */
+.fb-estado{font-size:10px;letter-spacing:1px;padding:3px 9px;border-radius:20px;margin-left:auto;}
+.fb-on{background:rgba(39,174,96,.12);color:#1e8449;}
+.fb-off{background:rgba(197,157,131,.15);color:var(--oro-2);}
+
+.chat-caja{height:220px;border:1px solid #ECE9E6;background:var(--arena);border-radius:8px;padding:10px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch;}
+.msg{padding:8px 12px;border-radius:10px;max-width:82%;font-size:13px;line-height:1.4;word-break:break-word;}
+.msg-sistema{background:transparent;color:var(--texto-2);font-size:10px;text-align:center;align-self:center;letter-spacing:1px;padding:2px 0;}
+.msg-recibido{background:var(--blanco);color:var(--texto);align-self:flex-start;border:1px solid var(--borde);}
+.msg-enviado{background:var(--verde);color:var(--blanco);align-self:flex-end;}
+.msg-autor{font-size:9px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;opacity:.7;}
+
+.chat-fila{display:flex;gap:8px;}
+.chat-fila input{flex:1;padding:11px 14px;border:1px solid var(--borde);border-radius:8px;font-size:13px;font-family:inherit;background:var(--blanco);color:var(--texto);-webkit-appearance:none;}
+.chat-fila input:focus{outline:none;border-color:var(--oro);}
+.btn-enviar{padding:11px 16px;background:var(--verde);color:var(--blanco);border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+.btn-enviar:active{background:var(--verde-2);}
+
+/* Typing dots */
+@keyframes blink{0%,80%,100%{opacity:.2;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+.typing-wrap{display:none;align-self:flex-start;}
+.typing-inner{background:var(--blanco);border:1px solid var(--borde);border-radius:10px;padding:8px 12px;display:flex;gap:4px;align-items:center;}
+.dot{width:6px;height:6px;background:var(--texto-2);border-radius:50%;animation:blink 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+
+/* ── AGENDA ── */
+.obj-lista{margin:0 0 14px;padding:0;list-style:none;}
+.obj-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(197,157,131,.1);font-size:13px;color:var(--texto);line-height:1.4;}
+.obj-item:last-child{border-bottom:none;}
+.obj-num{width:20px;height:20px;background:var(--verde);color:var(--blanco);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex-shrink:0;margin-top:1px;}
+.campo-minuta{width:100%;min-height:90px;padding:12px;border:1px solid var(--borde);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--arena);color:var(--texto);margin-bottom:10px;-webkit-appearance:none;}
+.campo-minuta:focus{outline:none;border-color:var(--oro);}
+.guardado-ok{display:none;font-size:10px;color:#27ae60;letter-spacing:1px;text-align:center;margin-top:6px;}
+
+/* ── NAV ── */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;background:var(--blanco);border-top:1px solid var(--borde);display:flex;padding:8px 0 max(8px,env(safe-area-inset-bottom));z-index:100;box-shadow:0 -4px 16px var(--sombra);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;border:none;background:none;color:var(--texto-2);font-family:inherit;transition:color .2s;}
+.nav-item.activo{color:var(--verde);}
+.nav-icono{font-size:20px;}
+.nav-label{font-size:8px;text-transform:uppercase;letter-spacing:1.5px;}
+.nav-icono-wrap{position:relative;display:inline-block;}
+.nav-badge{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#E74C3C;border-radius:50%;display:none;}
+
+/* ── MÓDULOS ── */
+.modulo{display:none;}
+.modulo.activo{display:block;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--verde-2);color:var(--blanco);padding:11px 22px;border-radius:30px;font-size:11px;letter-spacing:1.5px;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:transform .3s ease,opacity .3s ease;z-index:200;opacity:0;pointer-events:none;white-space:nowrap;}
+#toast.on{transform:translateX(-50%) translateY(0);opacity:1;}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     PANTALLA: LOGIN
-══════════════════════════════════════════ -->
+<!-- ══ LOGIN ══ -->
 <div id="login" class="pantalla activa">
-
   <div class="logo-wrap">
     <div class="logo-anillo">Ψ</div>
     <div class="logo-nombre">Konecta</div>
     <div class="logo-sub">Tu Alma</div>
     <div class="tag-clinica">Clínica Virtual · Especialistas</div>
   </div>
-
   <div class="form-login">
     <div class="campo">
-      <select id="sel-especialista">
+      <select id="sel-esp">
         <option value="">— Selecciona tu Especialista —</option>
         <option value="Yanick Espejel">Yanick Espejel</option>
         <option value="Dra. García">Dra. García</option>
@@ -754,24 +182,18 @@ html, body {
       </select>
     </div>
     <div class="campo">
-      <input type="password" id="inp-clave" placeholder="Contraseña de Acceso"
-             onkeydown="if(event.key==='Enter') doLogin()">
+      <input type="password" id="inp-pass" placeholder="Contraseña de Acceso"
+             onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn-oro" onclick="doLogin()">Acceder al Panel</button>
-    <button class="btn-bio" onclick="doBio()">
-      <span>&#128076;</span> Acceso Biométrico
-    </button>
-    <div class="error-msg" id="login-error"></div>
+    <button class="btn-bio" onclick="doBio()">&#128076; Acceso Biométrico</button>
+    <div class="error-msg" id="login-err"></div>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════
-     PANTALLA: APP
-══════════════════════════════════════════ -->
+<!-- ══ APP ══ -->
 <div id="app" class="pantalla">
 
-  <!-- Header -->
   <div class="app-header">
     <div class="header-brand">
       <div class="header-anillo">Ψ</div>
@@ -781,500 +203,444 @@ html, body {
       </div>
     </div>
     <div class="header-user" onclick="cerrarSesion()">
-      <div class="avatar-circle" id="avatar-iniciales">YE</div>
+      <div class="avatar-circle" id="avatar">YE</div>
     </div>
   </div>
 
-  <!-- Contenido de módulos -->
   <div class="scroll-area">
 
-    <!-- ── MÓDULO: HOME ── -->
+    <!-- HOME -->
     <div id="mod-home" class="modulo activo">
-
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>📅</span> Próxima Reunión</div>
         <div class="reunion-banner">
           <div class="reunion-etiqueta">Sesión Clínica Multidisciplinaria</div>
-          <div class="reunion-hora" id="hora-reunion">Hoy · 21:00 hrs</div>
-          <div class="reunion-fecha" id="fecha-reunion">—</div>
-          <div id="contador-reunion">Calculando...</div>
+          <div class="reunion-hora" id="reunion-hora">Sin programar</div>
+          <div class="reunion-fecha" id="reunion-fecha"></div>
+          <div id="contador-reunion">—</div>
         </div>
         <a id="btn-meet" href="https://meet.google.com/abc-defg-hij"
-           onclick="abrirMeet(event)"
-           class="btn-verde">
-          Entrar a Videollamada
-        </a>
-        <button class="btn-verde-outline" onclick="irAModulo('agenda')">Ver Agenda Completa</button>
+           onclick="abrirMeet(event)" class="btn-verde">Entrar a Videollamada</a>
+        <button class="btn-verde-outline" onclick="irA('agenda')">Ver Agenda Completa</button>
       </div>
-
       <div class="quick-grid">
-        <div class="quick-card" onclick="irAModulo('chat')">
+        <div class="quick-card" onclick="irA('chat')">
           <div class="quick-icono">💬</div>
           <div class="quick-titulo">Chat Interno</div>
           <div class="quick-sub">Canal exclusivo</div>
         </div>
-        <div class="quick-card" onclick="irAModulo('agenda')">
+        <div class="quick-card" onclick="irA('agenda')">
           <div class="quick-icono">📋</div>
           <div class="quick-titulo">Agenda</div>
           <div class="quick-sub">Minutas y objetivos</div>
         </div>
-        <div class="quick-card" onclick="irAModulo('video')">
+        <div class="quick-card" onclick="irA('video')">
           <div class="quick-icono">🎥</div>
           <div class="quick-titulo">Videollamada</div>
           <div class="quick-sub">Google Meet</div>
         </div>
-        <div class="quick-card" onclick="pedirNotificaciones()">
+        <div class="quick-card" onclick="pedirNotif()">
           <div class="quick-icono">🔔</div>
           <div class="quick-titulo">Notificaciones</div>
           <div class="quick-sub">Activar alertas</div>
         </div>
       </div>
-
     </div>
 
-    <!-- ── MÓDULO: CHAT ── -->
+    <!-- CHAT -->
     <div id="mod-chat" class="modulo">
       <div class="tarjeta">
         <div class="tarjeta-titulo">
           <span>💬</span> Canal Interno
-          <span class="estado-firebase firebase-off" id="estado-fb">● Local</span>
+          <span class="fb-estado fb-off" id="fb-estado">● Conectando...</span>
         </div>
         <div class="chat-caja" id="chat-cuerpo">
           <div class="msg msg-sistema">Canal seguro · Konecta activo</div>
         </div>
-        <div class="chat-input-fila">
-          <input type="text" id="chat-msg" placeholder="Escribe un mensaje..."
-                 onkeydown="if(event.key==='Enter') enviarMsg()">
+        <div class="chat-fila">
+          <input type="text" id="chat-inp" placeholder="Escribe un mensaje..."
+                 onkeydown="if(event.key==='Enter')enviarMsg()">
           <button class="btn-enviar" onclick="enviarMsg()">➤</button>
         </div>
       </div>
     </div>
 
-    <!-- ── MÓDULO: AGENDA ── -->
+    <!-- AGENDA -->
     <div id="mod-agenda" class="modulo">
-
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>🎯</span> Objetivos de Sesión</div>
-        <ul class="objetivos-lista" id="lista-objetivos">
-          <li class="objetivo-item">
-            <div class="obj-num">1</div>
-            <span>Alineación y deconstrucción de dinámicas nocivas entre el equipo.</span>
-          </li>
-          <li class="objetivo-item">
-            <div class="obj-num">2</div>
-            <span>Coordinación ante casos de indefensión aprendida en pacientes activos.</span>
-          </li>
-          <li class="objetivo-item">
-            <div class="obj-num">3</div>
-            <span>Revisión de protocolos de intervención en crisis.</span>
-          </li>
+        <ul class="obj-lista">
+          <li class="obj-item"><div class="obj-num">1</div><span>Alineación y deconstrucción de dinámicas nocivas entre el equipo.</span></li>
+          <li class="obj-item"><div class="obj-num">2</div><span>Coordinación ante casos de indefensión aprendida en pacientes activos.</span></li>
+          <li class="obj-item"><div class="obj-num">3</div><span>Revisión de protocolos de intervención en crisis.</span></li>
         </ul>
       </div>
-
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>📝</span> Minuta de Sesión</div>
         <textarea class="campo-minuta" id="campo-minuta"
                   placeholder="Escribe aquí los puntos tratados y los acuerdos tomados durante la sesión..."></textarea>
         <button class="btn-verde" onclick="guardarMinuta()">Guardar Informe</button>
-        <div class="guardado-badge" id="guardado-ok">✓ Guardado de forma segura</div>
+        <div class="guardado-ok" id="guardado-ok">✓ Guardado de forma segura</div>
       </div>
-
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>🗓</span> Programar Reunión</div>
-        <div class="campo" style="margin-bottom: 10px;">
-          <input type="datetime-local" id="inp-fecha-reunion"
-                 style="width:100%; padding:12px 14px; border:1px solid var(--borde); border-radius:8px; font-size:13px; font-family:inherit; background:var(--blanco); color:var(--texto); -webkit-appearance:none;">
+        <div class="campo" style="margin-bottom:10px;">
+          <input type="datetime-local" id="inp-fecha"
+                 style="width:100%;padding:12px 14px;border:1px solid var(--borde);border-radius:8px;font-size:13px;font-family:inherit;background:var(--blanco);color:var(--texto);-webkit-appearance:none;">
         </div>
-        <div class="campo" style="margin-bottom: 10px;">
-          <input type="text" id="inp-link-reunion"
+        <div class="campo" style="margin-bottom:10px;">
+          <input type="text" id="inp-link"
                  placeholder="Link de reunión (Meet / Teams)"
-                 style="width:100%; padding:12px 14px; border:1px solid var(--borde); border-radius:8px; font-size:13px; font-family:inherit; background:var(--blanco); color:var(--texto);">
+                 style="width:100%;padding:12px 14px;border:1px solid var(--borde);border-radius:8px;font-size:13px;font-family:inherit;background:var(--blanco);color:var(--texto);">
         </div>
         <button class="btn-verde" onclick="programarReunion()">Programar y Recordar</button>
       </div>
-
     </div>
 
-    <!-- ── MÓDULO: VIDEO ── -->
+    <!-- VIDEO -->
     <div id="mod-video" class="modulo">
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>🎥</span> Videollamada</div>
-        <p style="font-size: 13px; color: var(--texto-2); margin-bottom: 16px; line-height: 1.6;">
-          Acceso blindado a la sala virtual multidisciplinaria. El enlace forzará apertura
-          nativa en Google Meet para garantizar la estabilidad de la conexión.
+        <p style="font-size:13px;color:var(--texto-2);margin-bottom:16px;line-height:1.6;">
+          El botón de Google Meet fuerza apertura nativa en Android, garantizando estabilidad de conexión sin saturar el WebView.
         </p>
         <a id="btn-meet-2"
            href="intent://meet.google.com/abc-defg-hij#Intent;scheme=https;package=com.google.android.apps.meetings;end"
-           class="btn-verde" style="margin-bottom: 10px; text-decoration: none; display: block; text-align: center;"
-           onclick="toast('Abriendo Google Meet...')">
-          Abrir Google Meet
-        </a>
+           class="btn-verde" style="margin-bottom:10px;text-decoration:none;"
+           onclick="toast('Abriendo Google Meet...')">Abrir Google Meet</a>
         <a href="msteams://teams.microsoft.com"
-           class="btn-verde-outline" style="text-decoration: none; display: block; text-align: center;"
-           onclick="toast('Abriendo Microsoft Teams...')">
-          Abrir Microsoft Teams
-        </a>
+           class="btn-verde-outline" style="text-decoration:none;display:block;text-align:center;"
+           onclick="toast('Abriendo Microsoft Teams...')">Abrir Microsoft Teams</a>
       </div>
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>🔗</span> Enlace Personalizado</div>
-        <div class="campo" style="margin-bottom: 10px;">
-          <input type="url" id="inp-enlace-custom"
+        <div class="campo" style="margin-bottom:10px;">
+          <input type="url" id="enlace-custom"
                  placeholder="https://meet.google.com/tu-sala"
-                 style="width:100%; padding:12px 14px; border:1px solid var(--borde); border-radius:8px; font-size:13px; font-family:inherit; background:var(--blanco); color:var(--texto);">
+                 style="width:100%;padding:12px 14px;border:1px solid var(--borde);border-radius:8px;font-size:13px;font-family:inherit;background:var(--blanco);color:var(--texto);">
         </div>
-        <button class="btn-verde" onclick="abrirEnlaceCustom()">Conectarse</button>
+        <button class="btn-verde" onclick="abrirCustom()">Conectarse</button>
       </div>
     </div>
 
   </div><!-- /scroll-area -->
 
-  <!-- ── NAVEGACIÓN INFERIOR ── -->
+  <!-- NAV -->
   <nav class="nav-bar">
-    <button class="nav-item activo" id="nav-home" onclick="irAModulo('home')">
-      <div class="nav-icono-wrap">
-        <span class="nav-icono">🏠</span>
-      </div>
+    <button class="nav-item activo" id="nav-home" onclick="irA('home')">
+      <div class="nav-icono-wrap"><span class="nav-icono">🏠</span></div>
       <span class="nav-label">Inicio</span>
     </button>
-    <button class="nav-item" id="nav-chat" onclick="irAModulo('chat')">
+    <button class="nav-item" id="nav-chat" onclick="irA('chat')">
       <div class="nav-icono-wrap">
         <span class="nav-icono">💬</span>
         <span class="nav-badge" id="badge-chat"></span>
       </div>
       <span class="nav-label">Chat</span>
     </button>
-    <button class="nav-item" id="nav-agenda" onclick="irAModulo('agenda')">
-      <div class="nav-icono-wrap">
-        <span class="nav-icono">📋</span>
-      </div>
+    <button class="nav-item" id="nav-agenda" onclick="irA('agenda')">
+      <div class="nav-icono-wrap"><span class="nav-icono">📋</span></div>
       <span class="nav-label">Agenda</span>
     </button>
-    <button class="nav-item" id="nav-video" onclick="irAModulo('video')">
-      <div class="nav-icono-wrap">
-        <span class="nav-icono">🎥</span>
-      </div>
+    <button class="nav-item" id="nav-video" onclick="irA('video')">
+      <div class="nav-icono-wrap"><span class="nav-icono">🎥</span></div>
       <span class="nav-label">Video</span>
     </button>
   </nav>
 
 </div><!-- /app -->
 
-<!-- Toast global -->
 <div id="toast"></div>
 
-
 <script>
-/* ══════════════════════════════════════════
-   CREDENCIALES (Edita aquí para producción)
-   Formato: { "NombreEspecialista": "clave" }
-══════════════════════════════════════════ */
-const CREDENCIALES = {
+/* ═══════════════════════════════
+   CREDENCIALES
+═══════════════════════════════ */
+var CREDS = {
   "Yanick Espejel": "omicron2024",
   "Dra. García":    "blanca2024",
   "Especialista 3": "konecta3",
   "Especialista 4": "konecta4"
 };
 
-// UID único de sesión (para distinguir mensajes propios/ajenos)
-window._uid = Math.random().toString(36).slice(2);
+var UID          = Math.random().toString(36).slice(2);
+var usuarioActual = "";
+var reunionData   = null;
+var cuentaAtras   = null;
+var chatRef       = null;
+var fbListo       = false;
 
-let usuarioActual = "";
-let reunionProgramada = null;
-let checkReunionInterval = null;
+/* ═══════════════════════════════
+   FIREBASE: INICIAR ESCUCHA
+═══════════════════════════════ */
+function iniciarFirebase() {
+  try {
+    chatRef = db.ref("konecta_chat");
 
-/* ──────────────────────────────────────
+    // Solo escuchar mensajes NUEVOS (desde ahora)
+    chatRef.limitToLast(50).on("child_added", function(snap) {
+      var d = snap.val();
+      if (d) renderMsg(d.autor, d.texto, d.uid === UID);
+    });
+
+    fbListo = true;
+    var el = document.getElementById('fb-estado');
+    el.textContent = "● En línea";
+    el.className = "fb-estado fb-on";
+
+  } catch(e) {
+    console.warn("Firebase error:", e);
+    var el = document.getElementById('fb-estado');
+    el.textContent = "● Sin red";
+    el.className = "fb-estado fb-off";
+  }
+}
+
+/* ═══════════════════════════════
    LOGIN
-────────────────────────────────────── */
+═══════════════════════════════ */
 function doLogin() {
-  const esp  = document.getElementById('sel-especialista').value;
-  const pass = document.getElementById('inp-clave').value;
-  const err  = document.getElementById('login-error');
-
+  var esp  = document.getElementById('sel-esp').value;
+  var pass = document.getElementById('inp-pass').value;
+  var err  = document.getElementById('login-err');
   if (!esp)  { err.textContent = "Selecciona tu especialista."; return; }
   if (!pass) { err.textContent = "Ingresa tu contraseña.";      return; }
-
-  if (CREDENCIALES[esp] && CREDENCIALES[esp] === pass) {
+  if (CREDS[esp] && CREDS[esp] === pass) {
     acceder(esp);
   } else {
-    err.textContent = "Credenciales incorrectas. Intenta de nuevo.";
-    document.getElementById('inp-clave').value = "";
+    err.textContent = "Credenciales incorrectas.";
+    document.getElementById('inp-pass').value = "";
   }
 }
 
 function doBio() {
-  // En APK con WebView se puede integrar con la API nativa del dispositivo
-  // Aquí accedemos directo con el primer especialista si hay uno seleccionado
-  const esp = document.getElementById('sel-especialista').value;
-  if (!esp) { document.getElementById('login-error').textContent = "Selecciona tu especialista primero."; return; }
+  var esp = document.getElementById('sel-esp').value;
+  if (!esp) { document.getElementById('login-err').textContent = "Selecciona tu especialista primero."; return; }
   toast("Autenticación biométrica exitosa");
-  setTimeout(() => acceder(esp), 600);
+  setTimeout(function(){ acceder(esp); }, 600);
 }
 
 function acceder(nombre) {
   usuarioActual = nombre;
-  window._setUser && window._setUser(nombre);
+  var partes = nombre.split(' ');
+  var ini = (partes[0][0] + (partes[1] ? partes[1][0] : '')).toUpperCase();
+  document.getElementById('avatar').textContent = ini;
 
-  // Iniciales avatar
-  const partes = nombre.split(' ');
-  const ini = (partes[0][0] + (partes[1] ? partes[1][0] : '')).toUpperCase();
-  document.getElementById('avatar-iniciales').textContent = ini;
-
-  // Cambiar pantalla
   document.getElementById('login').classList.remove('activa');
   document.getElementById('app').classList.add('activa');
 
-  // Estado Firebase
-  setTimeout(() => {
-    const fb = document.getElementById('estado-fb');
-    if (window._firebaseReady) {
-      fb.textContent = "● Firebase"; fb.className = "estado-firebase firebase-on";
-    }
-  }, 1000);
-
-  // Cargar datos persistentes
   cargarDatos();
+  iniciarFirebase();
   iniciarContador();
-  pedirNotificacionesSilencioso();
+  pedirNotifSilencioso();
 }
 
 function cerrarSesion() {
   if (!confirm("¿Cerrar sesión?")) return;
+  if (chatRef) chatRef.off();
+  if (cuentaAtras) clearInterval(cuentaAtras);
   document.getElementById('app').classList.remove('activa');
   document.getElementById('login').classList.add('activa');
-  document.getElementById('inp-clave').value = "";
-  document.getElementById('login-error').textContent = "";
-  if (checkReunionInterval) clearInterval(checkReunionInterval);
+  document.getElementById('inp-pass').value = "";
+  document.getElementById('login-err').textContent = "";
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    NAVEGACIÓN
-────────────────────────────────────── */
-function irAModulo(id) {
-  // Limpiar badge chat si se abre chat
+═══════════════════════════════ */
+function irA(id) {
   if (id === 'chat') document.getElementById('badge-chat').style.display = 'none';
-
-  // Módulos
-  document.querySelectorAll('.modulo').forEach(m => m.classList.remove('activo'));
-  const mod = document.getElementById('mod-' + id);
-  if (mod) { mod.classList.add('activo'); mod.scrollTop = 0; }
-
-  // Nav items
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
-  const nav = document.getElementById('nav-' + id);
+  document.querySelectorAll('.modulo').forEach(function(m){ m.classList.remove('activo'); });
+  var mod = document.getElementById('mod-' + id);
+  if (mod) mod.classList.add('activo');
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('activo'); });
+  var nav = document.getElementById('nav-' + id);
   if (nav) nav.classList.add('activo');
-
-  // Scroll al top
   document.querySelector('.scroll-area').scrollTop = 0;
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    CHAT
-────────────────────────────────────── */
+═══════════════════════════════ */
 function enviarMsg() {
-  const inp  = document.getElementById('chat-msg');
-  const txt  = inp.value.trim();
+  var inp  = document.getElementById('chat-inp');
+  var txt  = inp.value.trim();
   if (!txt) return;
-
-  window._sendMsg(txt);
   inp.value = "";
+
+  if (fbListo && chatRef) {
+    chatRef.push({ autor: usuarioActual, texto: txt, uid: UID, ts: firebase.database.ServerValue.TIMESTAMP });
+  } else {
+    // Sin Firebase: render local
+    renderMsg(usuarioActual, txt, true);
+  }
 }
 
-function renderMensaje(autor, texto, propio) {
-  const caja = document.getElementById('chat-cuerpo');
-  const wrap = document.createElement('div');
+function renderMsg(autor, texto, propio) {
+  var caja = document.getElementById('chat-cuerpo');
+  var wrap = document.createElement('div');
   wrap.className = 'msg ' + (propio ? 'msg-enviado' : 'msg-recibido');
 
   if (!propio) {
-    const a = document.createElement('div');
+    var a = document.createElement('div');
     a.className = 'msg-autor';
     a.textContent = autor;
     wrap.appendChild(a);
   }
 
-  const t = document.createElement('div');
+  var t = document.createElement('div');
   t.textContent = texto;
   wrap.appendChild(t);
   caja.appendChild(wrap);
   caja.scrollTop = caja.scrollHeight;
 
-  // Badge si no está en pestaña de chat
   if (!propio && !document.getElementById('mod-chat').classList.contains('activo')) {
     document.getElementById('badge-chat').style.display = 'block';
-    notificar('Nuevo mensaje en Konecta', `${autor}: ${texto}`);
+    notificar('Konecta · Nuevo mensaje', autor + ': ' + texto);
   }
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    VIDEOLLAMADA
-────────────────────────────────────── */
+═══════════════════════════════ */
 function abrirMeet(e) {
-  // Android: intent URL para forzar app nativa
-  const ua = navigator.userAgent;
-  if (/Android/i.test(ua)) {
+  var sala = "abc-defg-hij"; // ← reemplaza con tu sala real
+  if (reunionData && reunionData.link) {
+    // extraer id de sala del link guardado
+    var m = reunionData.link.match(/meet\.google\.com\/([a-z0-9-]+)/i);
+    if (m) sala = m[1];
+  }
+  if (/Android/i.test(navigator.userAgent)) {
     e.preventDefault();
-    const sala = "abc-defg-hij"; // ← cambia por tu sala real
-    const intent = `intent://meet.google.com/${sala}#Intent;scheme=https;package=com.google.android.apps.meetings;end`;
-    window.location.href = intent;
+    window.location.href = "intent://meet.google.com/" + sala + "#Intent;scheme=https;package=com.google.android.apps.meetings;end";
     toast("Abriendo Google Meet...");
   } else {
     toast("Abriendo sala virtual...");
   }
 }
 
-function abrirEnlaceCustom() {
-  const url = document.getElementById('inp-enlace-custom').value.trim();
+function abrirCustom() {
+  var url = document.getElementById('enlace-custom').value.trim();
   if (!url) { toast("Introduce un enlace."); return; }
   window.open(url, '_blank');
-  toast("Conectando...");
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    AGENDA / MINUTA
-────────────────────────────────────── */
+═══════════════════════════════ */
 function guardarMinuta() {
-  const txt = document.getElementById('campo-minuta').value;
-  localStorage.setItem('konecta_minuta', txt);
-  const badge = document.getElementById('guardado-ok');
-  badge.style.display = 'block';
-  toast("Informe guardado de forma segura ✓");
-  setTimeout(() => badge.style.display = 'none', 3000);
+  localStorage.setItem('konecta_minuta', document.getElementById('campo-minuta').value);
+  var ok = document.getElementById('guardado-ok');
+  ok.style.display = 'block';
+  toast("Informe guardado ✓");
+  setTimeout(function(){ ok.style.display = 'none'; }, 3000);
 }
 
 function programarReunion() {
-  const fechaVal = document.getElementById('inp-fecha-reunion').value;
-  const link     = document.getElementById('inp-link-reunion').value.trim();
+  var fv   = document.getElementById('inp-fecha').value;
+  var link = document.getElementById('inp-link').value.trim();
+  if (!fv) { toast("Selecciona fecha y hora."); return; }
 
-  if (!fechaVal) { toast("Selecciona fecha y hora."); return; }
+  reunionData = { fecha: fv, link: link };
+  localStorage.setItem('konecta_reunion', JSON.stringify(reunionData));
 
-  reunionProgramada = { fecha: new Date(fechaVal), link };
-  localStorage.setItem('konecta_reunion', JSON.stringify({ fecha: fechaVal, link }));
-
-  // Actualizar banner
-  const d = reunionProgramada.fecha;
-  document.getElementById('hora-reunion').textContent =
+  var d = new Date(fv);
+  document.getElementById('reunion-hora').textContent =
     d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) + ' hrs';
-  document.getElementById('fecha-reunion').textContent =
+  document.getElementById('reunion-fecha').textContent =
     d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (link) document.getElementById('btn-meet').href = link;
 
-  if (link) {
-    document.getElementById('btn-meet').href = link;
-    document.getElementById('btn-meet').setAttribute('href', link);
-  }
-
-  toast("Reunión programada. Te avisaré 15 min antes.");
+  toast("Reunión programada. Alerta 15 min antes.");
   iniciarContador();
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    CONTADOR REGRESIVO
-────────────────────────────────────── */
+═══════════════════════════════ */
 function iniciarContador() {
-  if (checkReunionInterval) clearInterval(checkReunionInterval);
-
-  checkReunionInterval = setInterval(() => {
-    if (!reunionProgramada) return;
-    const ahora = new Date();
-    const diff  = reunionProgramada.fecha - ahora;
-    const cont  = document.getElementById('contador-reunion');
+  if (cuentaAtras) clearInterval(cuentaAtras);
+  cuentaAtras = setInterval(function() {
+    if (!reunionData) return;
+    var ahora = new Date();
+    var meta  = new Date(reunionData.fecha);
+    var diff  = meta - ahora;
+    var el    = document.getElementById('contador-reunion');
 
     if (diff <= 0) {
-      cont.textContent = "● Sesión en curso";
-      cont.style.color = "#E74C3C";
-      clearInterval(checkReunionInterval);
+      el.textContent = "● Sesión en curso";
+      el.style.color = "#E74C3C";
+      clearInterval(cuentaAtras);
       return;
     }
+    var h = Math.floor(diff / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    el.textContent = "Comienza en: " + (h > 0 ? h + "h " : "") + m + "m " + s + "s";
+    el.style.color = "var(--oro)";
 
-    const h = Math.floor(diff / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-
-    cont.textContent = `Comienza en: ${h > 0 ? h + 'h ' : ''}${m}m ${s}s`;
-
-    // Alerta 15 minutos antes
     if (diff <= 900000 && diff > 899000) {
-      notificar('Konecta · Recordatorio', 'La sesión comienza en 15 minutos.');
-      toast("⏰ La sesión comienza en 15 minutos");
+      notificar("Konecta · Recordatorio", "La sesión comienza en 15 minutos.");
+      toast("⏰ Sesión en 15 minutos");
     }
-
   }, 1000);
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    NOTIFICACIONES
-────────────────────────────────────── */
-function pedirNotificacionesSilencioso() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
+═══════════════════════════════ */
+function pedirNotifSilencioso() {
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 }
 
-function pedirNotificaciones() {
-  if (!('Notification' in window)) { toast("Notificaciones no soportadas en este dispositivo."); return; }
-  Notification.requestPermission().then(p => {
-    if (p === 'granted') toast("✓ Notificaciones activadas");
-    else toast("Notificaciones bloqueadas en ajustes del dispositivo.");
+function pedirNotif() {
+  if (!('Notification' in window)) { toast("Notificaciones no soportadas aquí."); return; }
+  Notification.requestPermission().then(function(p){
+    toast(p === 'granted' ? "✓ Notificaciones activadas" : "Bloqueadas en ajustes del dispositivo.");
   });
 }
 
 function notificar(titulo, cuerpo) {
   if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(titulo, { body: cuerpo, icon: '' });
+    new Notification(titulo, { body: cuerpo });
   }
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    TOAST
-────────────────────────────────────── */
-let toastTimer = null;
+═══════════════════════════════ */
+var toastTimer;
 function toast(msg) {
-  const el = document.getElementById('toast');
+  var el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('on');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('on'), 3000);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 3000);
 }
 
-/* ──────────────────────────────────────
+/* ═══════════════════════════════
    PERSISTENCIA LOCAL
-────────────────────────────────────── */
+═══════════════════════════════ */
 function cargarDatos() {
-  // Minuta
-  const minuta = localStorage.getItem('konecta_minuta');
-  if (minuta) document.getElementById('campo-minuta').value = minuta;
+  var m = localStorage.getItem('konecta_minuta');
+  if (m) document.getElementById('campo-minuta').value = m;
 
-  // Reunión programada
-  const rData = localStorage.getItem('konecta_reunion');
-  if (rData) {
+  var r = localStorage.getItem('konecta_reunion');
+  if (r) {
     try {
-      const r = JSON.parse(rData);
-      reunionProgramada = { fecha: new Date(r.fecha), link: r.link };
-      const d = reunionProgramada.fecha;
-      document.getElementById('hora-reunion').textContent =
+      reunionData = JSON.parse(r);
+      var d = new Date(reunionData.fecha);
+      document.getElementById('reunion-hora').textContent =
         d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) + ' hrs';
-      document.getElementById('fecha-reunion').textContent =
+      document.getElementById('reunion-fecha').textContent =
         d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
-      if (r.link) {
-        document.getElementById('btn-meet').href = r.link;
-        document.getElementById('inp-link-reunion').value = r.link;
+      if (reunionData.link) {
+        document.getElementById('btn-meet').href = reunionData.link;
+        document.getElementById('inp-link').value = reunionData.link;
       }
-      document.getElementById('inp-fecha-reunion').value = r.fecha;
+      document.getElementById('inp-fecha').value = reunionData.fecha;
     } catch(e) {}
   }
-}
-
-/* ──────────────────────────────────────
-   SERVICE WORKER (notificaciones offline)
-────────────────────────────────────── */
-if ('serviceWorker' in navigator) {
-  const swCode = `
-    self.addEventListener('push', e => {
-      const d = e.data ? e.data.json() : { title: 'Konecta', body: 'Tienes un mensaje nuevo.' };
-      self.registration.showNotification(d.title, { body: d.body });
-    });
-  `;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
 }
 </script>
 </body>
