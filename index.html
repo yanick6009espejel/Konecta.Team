@@ -147,7 +147,7 @@ html,body{height:100%;background:var(--arena);color:var(--texto);font-family:'Ge
           <div class="reunion-fecha" id="reunion-fecha"></div>
           <div id="contador-reunion">—</div>
         </div>
-        <a id="btn-meet" href="https://meet.google.com/wzp-raak-yox"
+        <a id="btn-meet" href="https://meet.google.com/wzp-raak-yox" target="_blank" rel="noopener noreferrer"
            onclick="abrirMeet(event)" class="btn-verde">Entrar a Videollamada</a>
         <button class="btn-verde-outline" onclick="irA('agenda')">Ver Agenda Completa</button>
       </div>
@@ -206,10 +206,10 @@ html,body{height:100%;background:var(--arena);color:var(--texto);font-family:'Ge
     <div id="mod-video" class="modulo">
       <div class="tarjeta">
         <div class="tarjeta-titulo"><span>🎥</span> Videollamada</div>
-        <p style="font-size:13px;color:var(--texto-2);margin-bottom:16px;line-height:1.6;">El botón fuerza apertura nativa de Google Meet en Android.</p>
-        <a href="intent://meet.google.com/wzp-raak-yox#Intent;scheme=https;package=com.google.android.apps.meetings;end"
+        <p style="font-size:13px;color:var(--texto-2);margin-bottom:16px;line-height:1.6;">Acceso a las plataformas de comunicación.</p>
+        <a href="https://meet.google.com/wzp-raak-yox" target="_blank" rel="noopener noreferrer"
            class="btn-verde" style="margin-bottom:10px;" onclick="toast('Abriendo Google Meet...')">Abrir Google Meet</a>
-        <a href="msteams://teams.microsoft.com" class="btn-verde-outline"
+        <a href="https://teams.microsoft.com" target="_blank" rel="noopener noreferrer" class="btn-verde-outline"
            onclick="toast('Abriendo Microsoft Teams...')">Abrir Microsoft Teams</a>
       </div>
       <div class="tarjeta">
@@ -365,11 +365,9 @@ function irA(id) {
 }
 
 function abrirMeet(e) {
-  if (/Android/i.test(navigator.userAgent)) {
-    e.preventDefault();
-    window.location.href = "intent://meet.google.com/wzp-raak-yox#Intent;scheme=https;package=com.google.android.apps.meetings;end";
-    toast("Abriendo Google Meet...");
-  } else { toast("Abriendo sala virtual..."); }
+  e.preventDefault();
+  window.open("https://meet.google.com/wzp-raak-yox", "_blank");
+  toast("Abriendo Google Meet...");
 }
 
 function abrirCustom() {
