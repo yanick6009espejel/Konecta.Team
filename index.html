@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Konecta">
 <style>
-:root{--arena:#FDFBF7;--texto:#1E1C1A;--texto-2:#5A5550;--oro:#C59D83;--oro-2:#A67C6D;--verde:#063D3B;--verde-2:#042928;--verde-l:#0A5250;--blanco:#FFFFFF;--sombra:rgba(6,61,59,0.08);--borde:rgba(197,157,131,0.22);--r:10px;}
+:root{--arena:#FFFFFF;--texto:#1E1C1A;--texto-2:#5A5550;--oro:#C59D83;--oro-2:#A67C6D;--verde:#063D3B;--verde-2:#042928;--verde-l:#063D3B;--blanco:#FFFFFF;--sombra:rgba(6,61,59,0.08);--borde:rgba(197,157,131,0.22);--r:10px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:var(--arena);color:var(--texto);font-family:'Georgia','Times New Roman',serif;overflow:hidden;}
 .pantalla{display:none;flex-direction:column;height:100vh;}
@@ -245,7 +245,6 @@ html,body{height:100%;background:var(--arena);color:var(--texto);font-family:'Ge
 
 <div id="toast"></div>
 
-<!-- Firebase al final del body: garantiza que carga antes del JS -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
@@ -260,6 +259,8 @@ firebase.initializeApp({
 });
 var db      = firebase.database();
 var chatRef = db.ref("konecta_chat");
+var agendaRef = db.ref("konecta_agenda");
+var minutaRef = db.ref("konecta_minuta");
 
 var CREDS = {
   "Yanick Espejel": "omicron2024",
@@ -286,7 +287,7 @@ function doLogin() {
 function doBio() {
   var esp = document.getElementById('sel-esp').value;
   if (!esp) { document.getElementById('login-err').textContent = "Selecciona tu especialista primero."; return; }
-  toast("Autenticación biométrica exitosa");
+  toast("Autenticación biométrica en desarrollo");
   setTimeout(function(){ acceder(esp); }, 600);
 }
 
@@ -299,8 +300,6 @@ function acceder(nombre) {
   document.getElementById('app').classList.add('activa');
   cargarDatos();
   iniciarChat();
-  iniciarContador();
-  pedirNotifSilencioso();
 }
 
 function cerrarSesion() {
@@ -377,10 +376,12 @@ function abrirCustom() {
 }
 
 function guardarMinuta() {
-  localStorage.setItem('konecta_minuta', document.getElementById('campo-minuta').value);
+  var texto = document.getElementById('campo-minuta').value;
+  minutaRef.set(texto); 
+  
   var ok = document.getElementById('guardado-ok');
   ok.style.display = 'block';
-  toast("Informe guardado ✓");
+  toast("Informe guardado en red ✓");
   setTimeout(function(){ ok.style.display = 'none'; }, 3000);
 }
 
@@ -388,14 +389,9 @@ function programarReunion() {
   var fv   = document.getElementById('inp-fecha').value;
   var link = document.getElementById('inp-link').value.trim();
   if (!fv) { toast("Selecciona fecha y hora."); return; }
-  reunionData = { fecha: fv, link: link };
-  localStorage.setItem('konecta_reunion', JSON.stringify(reunionData));
-  var d = new Date(fv);
-  document.getElementById('reunion-hora').textContent = d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' hrs';
-  document.getElementById('reunion-fecha').textContent = d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-  if (link) document.getElementById('btn-meet').href = link;
-  toast("Reunión programada. Alerta 15 min antes.");
-  iniciarContador();
+  
+  agendaRef.set({ fecha: fv, link: link }); 
+  toast("Reunión programada en red.");
 }
 
 function iniciarContador() {
@@ -432,19 +428,25 @@ function toast(msg) {
 }
 
 function cargarDatos() {
-  var m = localStorage.getItem('konecta_minuta');
-  if (m) document.getElementById('campo-minuta').value = m;
-  var r = localStorage.getItem('konecta_reunion');
-  if (r) {
-    try {
-      reunionData = JSON.parse(r);
+  minutaRef.on('value', function(snap) {
+    var m = snap.val();
+    if (m) document.getElementById('campo-minuta').value = m;
+  });
+
+  agendaRef.on('value', function(snap) {
+    reunionData = snap.val();
+    if (reunionData) {
       var d = new Date(reunionData.fecha);
       document.getElementById('reunion-hora').textContent = d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + ' hrs';
       document.getElementById('reunion-fecha').textContent = d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-      if (reunionData.link) { document.getElementById('btn-meet').href = reunionData.link; document.getElementById('inp-link').value = reunionData.link; }
+      if (reunionData.link) { 
+        document.getElementById('btn-meet').href = reunionData.link; 
+        document.getElementById('inp-link').value = reunionData.link; 
+      }
       document.getElementById('inp-fecha').value = reunionData.fecha;
-    } catch(e) {}
-  }
+      iniciarContador();
+    }
+  });
 }
 </script>
 </body>
